@@ -18,7 +18,9 @@ App personal para el iPhone del usuario. La lógica va en **Kotlin** (Kotlin Mul
 
 ## Estado actual
 
-- El repo todavía es un proyecto **Kotlin JVM + Gradle** (JDK 21) recién creado, con `src/` vacío. **Falta convertirlo a Kotlin Multiplatform** (`shared/` + `iosApp/`).
+- **Gradle ya está convertido a Kotlin Multiplatform** (Kotlin 2.4.21, Gradle 9.6, JDK 21). El módulo `shared` tiene los targets `jvm()`, para los tests en Windows, e `iosArm64`, que genera el framework estático `Shared`. Paquete: `com.dremonj.apppersonal`.
+- **Falta crear `iosApp/` en Xcode, en el Mac**, y conectarlo con la *Run Script* `./gradlew :shared:embedAndSignAppleFrameworkForXcode`. El Mac necesita un JDK 21.
+- Tests en Windows: `./gradlew :shared:jvmTest` (o el botón ▶ de IntelliJ). La terminal de Windows tiene Java 8 por defecto, así que hay que usar el JDK 21 de IntelliJ (`C:\Users\danie\.jdks\temurin-21.0.13`).
 - **Falta decidir qué hará la app.** Pregúntalo antes de diseñar clases.
 
 ## Entorno
