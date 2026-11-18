@@ -1,53 +1,85 @@
-# app-personal
+# DailyHub — Contexto para Claude Code
 
-App personal para el iPhone del usuario. La lógica va en **Kotlin** (Kotlin Multiplatform) y la interfaz en **SwiftUI**. La app funciona solo en el iPhone, sin servidor.
+App personal de Daniel Remón (solo para él). Objetivo: aprender **Kotlin** (backend) y **Swift** (app de iPhone).
+También es proyecto de portfolio: el código tiene que estar limpio y ser fácil de entender.
 
-## Cómo trabajar con el usuario (IMPORTANTE)
+Plan completo (arquitectura, modelos, API, fases): `docs/PLAN.md`. Léelo al empezar cada fase.
 
-- **El usuario escribe todo el código.** Claude le dice qué escribir, paso a paso y en fragmentos pequeños, y le explica qué hace cada cosa y para qué sirve. No crees ni edites archivos de código de la app salvo que lo pida expresamente. Sí puedes leer el código, revisarlo y explicar errores.
-- **Los commits y los push los hace el usuario.** Recuérdale el flujo cuando toque.
-- Habla en **español**, con explicaciones sencillas. Está aprendiendo Kotlin/Java y algo de Swift.
-- Respuestas breves y directas, sobre todo con dudas rápidas.
+## Cómo trabajamos (IMPORTANTE)
 
-## Arquitectura
+Daniel está aprendiendo. Sabe Java básico (DAM1). Kotlin y Swift son nuevos para él.
 
-- **Kotlin (`shared/`)**: modelos de datos, reglas y cálculos, validaciones, guardado de datos en el iPhone y tests. Casi todo el trabajo va aquí. Regla: si no es algo que se ve o se toca, va en Kotlin.
-- **Swift (`iosApp/`)**: solo pantallas, navegación, botones y formularios, más el "pegamento" para llamar a Kotlin.
-- Al principio se evitan las corrutinas y `Flow` en la API que usa Swift, para que la conexión sea sencilla.
-- En `commonMain` se usa solo la librería estándar de Kotlin, nada de `java.*`. Para fechas, `kotlinx-datetime`.
+- **Daniel escribe el código.** No crees ni edites archivos de código salvo que te lo pida explícitamente. Enséñale el código en el chat y él lo escribe.
+- Pasos pequeños: un archivo o una clase por paso.
+- En cada paso:
+  1. Qué vamos a hacer y por qué (2-3 frases).
+  2. Ruta exacta del archivo.
+  3. Código completo del archivo, o el trozo exacto a añadir indicando dónde va.
+  4. Explicación de cada clase y cada método: qué hace, parámetros, qué devuelve y por qué está escrito así.
+  5. Conceptos nuevos de Kotlin/Swift comparados con su equivalente en Java.
+  6. Cómo comprobar que funciona (ejecutar, curl, test o iPhone).
+  7. Mensaje de commit sugerido.
+- Puedes leer los archivos del repo para revisar lo que ha escrito Daniel y señalar errores.
+- **Pruebas: las ejecutas tú** cuando Daniel lo pida.
+  - Backend (Windows): `./gradlew test`, arrancar el servidor en segundo plano y hacer peticiones con curl. Páralo al acabar.
+  - iOS (Mac): puedes compilar con `xcodebuild` para detectar errores. La prueba en el iPhone la hace Daniel.
+  - Enseña cada comando que ejecutes y explica el resultado, para que Daniel aprenda a hacerlo él.
+- Si algo falla: explica la causa antes de dar el arreglo y no edites el código, lo escribe Daniel. Propón una línea para "Errores y lecciones".
+- No pases a la siguiente fase si la actual no compila y funciona.
+- Responde en español de España, frases cortas.
 
-## Estado actual
+## Stack
 
-- **Gradle ya está convertido a Kotlin Multiplatform** (Kotlin 2.4.21, Gradle 9.6, JDK 21). El módulo `shared` tiene los targets `jvm()`, para los tests en Windows, e `iosArm64`, que genera el framework estático `Shared`. Paquete: `com.dremonj.apppersonal`.
-- **Falta crear `iosApp/` en Xcode, en el Mac**, y conectarlo con la *Run Script* `./gradlew :shared:embedAndSignAppleFrameworkForXcode`.
-- **`shared/` todavía no tiene archivos `.kt`**, así que Gradle responde `NO-SOURCE` y no genera el framework `Shared`. Hasta que exista el primer archivo Kotlin no se puede probar el framework en Xcode.
-- En el Mac ya se ha comprobado (2026-11-16) que Gradle arranca con JDK 21, que el proyecto configura bien para `jvm` e `iosArm64` y que el compilador de Kotlin/Native ya está descargado (`~/.konan`).
-- Tests en Windows: `./gradlew :shared:jvmTest` (o el botón ▶ de IntelliJ). La terminal de Windows tiene Java 8 por defecto, así que hay que usar el JDK 21 de IntelliJ (`C:\Users\danie\.jdks\temurin-21.0.13`).
-- **Falta decidir qué hará la app.** Pregúntalo antes de diseñar clases.
+| Parte | Tecnología | Dónde |
+|---|---|---|
+| Backend | Kotlin, Ktor 3, kotlinx.serialization, kotlinx-datetime, Exposed, SQLite (PostgreSQL en la fase 7) | PC Windows, IntelliJ IDEA, carpeta `backend/` |
+| App | Swift, SwiftUI (iOS 17+), URLSession con async/await, HealthKit | Mac, Xcode, carpeta `ios/` |
+| IA | Groq (plan gratuito, API compatible con OpenAI), llamada **solo desde el backend** | `backend/` |
+
+## Reglas del proyecto
+
+- Toda la lógica y los datos viven en el backend. La app de iOS muestra datos, recoge lo que escribe Daniel y lee los pasos de Salud.
+- Nombres de clases, métodos, variables y commits en inglés. Comentarios en español.
+- Capas del backend: `routes` → `service` → `repository` → `db`. Las rutas nunca tocan la base de datos directamente.
+- La app sigue MVVM: `View` (SwiftUI) + `ViewModel` (`@Observable`) + `APIClient`.
+- Colores solo desde `Theme.swift` (paleta en `docs/PLAN.md`, sección 7). Modo oscuro siempre.
+- Los modelos de Swift (`Codable`) reflejan exactamente los DTO de Kotlin. Si cambia uno, cambia el otro y se actualiza el contrato de la API en `docs/PLAN.md`.
+- Secretos (`AI_API_KEY`, `APP_TOKEN`) solo en `backend/.env`, que está en `.gitignore`. En el repo va `backend/.env.example` sin valores.
+- Se trabaja desde dos ordenadores: `git pull` antes de empezar, commit y `git push` al acabar.
+
+## Comandos
+
+- Backend: `cd backend` y `./gradlew run` (PowerShell: `.\gradlew run`)
+- Tests del backend: `./gradlew test`
+- Probar la API: `curl http://localhost:8080/health` (en PowerShell: `curl.exe`)
+- iOS: abrir el proyecto de `ios/` en Xcode y ejecutar en el iPhone.
+
+## Estado
+
+<!-- Actualizar al acabar cada paso -->
+- Fase actual: 0 — Cimientos
+- Último paso hecho: —
+- Siguiente paso: crear el proyecto Ktor en `backend/`
+
+## Errores y lecciones
+
+<!-- Una línea por error: qué pasó → causa → solución -->
+-
 
 ## Entorno
 
 | | Windows (PC) | Mac |
 |---|---|---|
-| Uso | Lógica Kotlin en IntelliJ IDEA | Pantallas SwiftUI en Xcode y pruebas en el iPhone |
+| Uso | Backend Kotlin en IntelliJ IDEA | App SwiftUI en Xcode y pruebas en el iPhone |
 | Ruta del repo | `C:\Users\danie\Desktop\PROYECTO` | `~/Proyectos/app-personal` |
 
-- **Repo**: https://github.com/dremonj/app-personal (público, rama `main`). Es su único repo público, aparte del README del perfil.
-- **Mac**: MacBook Air 2012 (Intel, 8 GB de RAM, unos 121 GB de disco) con **macOS Sequoia 15.8.3 instalado con OpenCore Legacy Patcher** (OCLP 2.5.1). Va lento.
-  - **No actualizar macOS** sin comprobar antes que OCLP lo admite. Después de cada actualización, revisar en OCLP los *Root Patches*.
-- **Xcode 26.3 (Universal)** es el máximo para Sequoia. Xcode 27 pide Tahoe y no es viable. Tiene instalado el componente iOS 26.2, que también hace falta para compilar para el dispositivo. **Sin simulador**: las pruebas se hacen en el iPhone por cable.
-- **iPhone con iOS 27.2.1**. Se ha comprobado que Xcode 26.3 instala y ejecuta apps en él. El primer arranque con depurador tarda mucho.
-- **Apple ID gratuito (Personal Team)**: las apps caducan a los 7 días. Para renovarlas, conectar el iPhone y pulsar ▶ en Xcode.
-- **JDK 21 en el Mac**: Temurin 21.0.13 (x64), instalado en `~/Library/Java/JavaVirtualMachines/`, la carpeta de Java del usuario (no hizo falta `sudo`). `java -version` y `/usr/libexec/java_home` lo encuentran. No hay Homebrew.
-- **⚠️ Kotlin/Native va a dejar de admitir los Mac Intel.** Con Kotlin 2.4.21, Gradle avisa: *"The current host platform 'macos_x64' is deprecated and will be removed in a future Kotlin release"*. Hoy funciona, pero **no subas la versión de Kotlin del proyecto sin comprobar antes que sigue admitiendo `macos_x64` como host.** Si se pierde el soporte, este Mac no podrá compilar el framework para el iPhone. `iosArm64` es un destino Tier 1 y la primera compilación en este Mac es lenta.
-- **`gradlew` debe ser ejecutable.** Si se crea o se toca desde Windows, puede perder el permiso y en el Mac sale `permission denied: ./gradlew`. Se arregla con `git update-index --chmod=+x gradlew`, que cambia el permiso en el repo, y `chmod +x gradlew`, que lo cambia en el disco. Después, commit y push.
-- Git en el Mac está autenticado con GitHub CLI (`gh auth login`). En este repo se usa el correo noreply de GitHub.
-
-## Flujo de trabajo con dos ordenadores
-
-1. **Al empezar**: `git pull` (en IntelliJ, Ctrl+T).
-2. Trabajar: lógica y tests en Windows, pantallas en el Mac.
-3. **Al terminar**: `git add .` → `git commit -m "mensaje claro"` → `git push` (en IntelliJ, Ctrl+K y después Ctrl+Shift+K).
-
-
-- Esto es una prueba
+- **Repo**: https://github.com/dremonj/app-personal (público, rama `main`). Git en el Mac autenticado con GitHub CLI; se usa el correo noreply de GitHub.
+- **Windows**: la terminal tiene Java 8 por defecto. Usar el JDK 21 de IntelliJ (`C:\Users\danie\.jdks\temurin-21.0.13`).
+- **Mac**: MacBook Air 2012 (Intel, 8 GB de RAM, ~121 GB de disco) con macOS Sequoia 15.8.3 vía OpenCore Legacy Patcher (OCLP 2.5.1). Va lento.
+  - **No actualizar macOS** sin comprobar antes que OCLP lo admite. Tras cada actualización, revisar los *Root Patches* en OCLP.
+  - JDK 21 (Temurin 21.0.13, x64) en `~/Library/Java/JavaVirtualMachines/`. No hay Homebrew.
+- **Xcode 26.3** es el máximo para Sequoia (Xcode 27 pide Tahoe). Tiene el componente iOS 26.2. **Sin simulador**: se prueba en el iPhone por cable.
+- **iPhone con iOS 27.2.1**. Xcode 26.3 instala y ejecuta apps en él. El primer arranque con depurador tarda mucho.
+- **Apple ID gratuito (Personal Team)**: las apps caducan a los 7 días. Para renovar, conectar el iPhone y pulsar ▶ en Xcode.
+- **`gradlew` debe ser ejecutable.** Si sale `permission denied: ./gradlew` en el Mac: `git update-index --chmod=+x gradlew` y `chmod +x gradlew`, luego commit y push.
+- **Estructura heredada**: en la raíz hay un proyecto Gradle Kotlin Multiplatform (`shared/`, sin archivos `.kt`) de antes de este plan. El plan usa `backend/` (Ktor) e `ios/`. Hay que decidir en la fase 0 cómo adaptarlo.
