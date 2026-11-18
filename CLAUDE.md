@@ -48,3 +48,6 @@ App personal para el iPhone del usuario. La lógica va en **Kotlin** (Kotlin Mul
 1. **Al empezar**: `git pull` (en IntelliJ, Ctrl+T).
 2. Trabajar: lógica y tests en Windows, pantallas en el Mac.
 3. **Al terminar**: `git add .` → `git commit -m "mensaje claro"` → `git push` (en IntelliJ, Ctrl+K y después Ctrl+Shift+K).
+
+
+- Esto es una prueba
